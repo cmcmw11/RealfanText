@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ค้นหาเพื่อน 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#a5c9ff;--purple:#d6b8ff;--white:#ffffff;--bg:#f5f7ff;--text:#333;--shadow:0 4px 10px rgba(0,0,0,0.05);--radius:18px;}
+body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
+.search-box{margin:16px;width:90%;display:flex;gap:8px;}
+.search-box input{flex:1;padding:8px;border-radius:var(--radius);border:1px solid #ddd;}
+.search-box button{padding:8px 12px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--blue));color:var(--white);cursor:pointer;}
+main{width:100%;padding:0 16px 80px 16px;flex:1;}
+.user{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:var(--shadow);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
+footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
+button.add-friend{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;border:none;padding:6px 10px;border-radius:12px;cursor:pointer;}
+</style>
+</head>
+<body>
+<header>ค้นหาเพื่อน 💜</header>
+
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="พิมพ์ชื่อเพื่อน...">
+<button onclick="searchFriends()">🔍</button>
+</div>
+
+<main id="results"></main>
+
+<footer>
+<button onclick="goTo('index.html')">🏠</button>
+<button onclick="goTo('chat.html')">💬</button>
+<button onclick="goTo('profile.html')">🧑</button>
+<button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, query, orderBy, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+  authDomain: "realfantext.firebaseapp.com",
+  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+  projectId: "realfantext",
+  storageBucket: "realfantext.firebasestorage.app",
+  messagingSenderId: "1095067084325",
+  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+  measurementId: "G-TYRV3WJTJV"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function searchFriends(){
+  const qText = document.getElementById('searchInput').value.toLowerCase();
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML='';
+
+  const q = query(collection(db,"users"),orderBy("username")); // สมมติ collection users
+  const snapshot = await getDocs(q);
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    if(data.username.toLowerCase().includes(qText)){
+      const userDiv = document.createElement('div');
+      userDiv.className='user';
+      userDiv.innerHTML=`<span>${data.username}</span>
+        <button class="add-friend" onclick="addFriend('${doc.id}','${data.username}')">➕ เพิ่มเพื่อน</button>`;
+      resultsDiv.appendChild(userDiv);
+    }
+  });
+}
+
+async function addFriend(userId, username){
+  const currentUser = "currentUserId"; // TODO: แทนด้วยผู้ใช้จริง
+  await setDoc(doc(db,"friends",currentUser+"_"+userId),{
+    from: currentUser,
+    to: userId,
+    createdAt:new Date()
+  });
+  alert(`✅ เพิ่มเพื่อน ${username} สำเร็จ!`);
+}
+
+function goTo(page){ window.location.href=page; }
+window.goTo=goTo;
+window.searchFriends=searchFriends;
+window.addFriend=addFriend;
+</script>
+</body>
+</html>
