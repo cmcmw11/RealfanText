@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RealFanText 💜</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --blue:#a5c9ff;
+      --purple:#d6b8ff;
+      --white:#ffffff;
+      --bg:#f5f7ff;
+      --text:#333;
+      --shadow:0 4px 10px rgba(0,0,0,0.05);
+      --radius:18px;
+    }
+
+    body{
+      font-family:'Mali',sans-serif;
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      max-width:430px;
+      margin:0 auto;
+      min-height:100vh;
+    }
+
+    header{
+      background:linear-gradient(90deg,var(--blue),var(--purple));
+      color:var(--white);
+      width:100%;
+      text-align:center;
+      padding:12px 0;
+      font-size:1.4rem;
+      font-weight:600;
+      position:sticky;
+      top:0;
+      z-index:100;
+      box-shadow:var(--shadow);
+      border-bottom-left-radius:var(--radius);
+      border-bottom-right-radius:var(--radius);
+    }
+
+    /* ปุ่มค้นหาโพสต์/เพื่อน */
+    .search-buttons{
+      display:flex;
+      justify-content:space-around;
+      margin:12px 16px;
+      gap:8px;
+    }
+    .search-buttons button{
+      flex:1;
+      padding:10px;
+      border-radius: var(--radius);
+      border:none;
+      font-family:'Mali';
+      font-weight:600;
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      color:var(--white);
+      cursor:pointer;
+      box-shadow:var(--shadow);
+    }
+
+    main{width:100%;padding:0 16px 80px 16px;flex:1;}
+
+    /* 📝 ส่วนโพสต์ */
+    .create-post{
+      background:var(--white);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin-bottom:20px;
+    }
+    .create-post textarea{
+      width:100%;
+      border:none;
+      resize:none;
+      padding:10px;
+      font-family:'Mali';
+      font-size:1rem;
+      border-radius:var(--radius);
+      background:#f0f4ff;
+    }
+
+    .media-upload{
+      margin-top:6px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .media-upload label{
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      color:var(--white);
+      padding:6px 12px;
+      border-radius:12px;
+      font-size:0.9rem;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+    }
+    .file-name{font-size:0.8rem;color:#666;}
+
+    .options{
+      display:flex;
+      justify-content:space-between;
+      margin-top:8px;
+      font-size:0.9rem;
+      flex-wrap:wrap;
+    }
+    select,input[type="checkbox"]{
+      font-family:'Mali';
+      border-radius:12px;
+      border:1px solid #ddd;
+      padding:4px 6px;
+    }
+
+    .post-btn{
+      width:100%;
+      margin-top:10px;
+      background:linear-gradient(135deg,var(--purple),var(--blue));
+      color:var(--white);
+      border:none;
+      border-radius:var(--radius);
+      padding:10px;
+      font-size:1rem;
+      cursor:pointer;
+    }
+
+    /* โพสต์ทั่วไป */
+    .post{
+      background:var(--white);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:12px 16px;
+      margin-bottom:16px;
+    }
+    .author{font-weight:600;color:#6a5acd;}
+    .content{margin-top:8px;font-size:1rem;}
+    .actions{margin-top:10px;display:flex;justify-content:space-between;font-size:1.2rem;cursor:pointer;}
+
+    footer{
+      background:var(--white);
+      position:fixed;
+      bottom:0;
+      width:100%;
+      max-width:430px;
+      display:flex;
+      justify-content:space-around;
+      padding:10px 0;
+      box-shadow:var(--shadow);
+      border-top-left-radius:var(--radius);
+      border-top-right-radius:var(--radius);
+    }
+    footer button{
+      background:none;
+      border:none;
+      font-size:1.5rem;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <header>RealFanText 💜</header>
+
+  <!-- ปุ่มค้นหาโพสต์/เพื่อน -->
+  <div class="search-buttons">
+    <button onclick="goTo('postsearch.html')">🔍 ค้นหาโพสต์</button>
+    <button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑 ค้นหาเพื่อน</button>
+  </div>
+
+  <main id="feed">
+
+    <!-- 📝 โพสต์ของคุณ -->
+    <div class="create-post">
+      <textarea id="postText" rows="3" placeholder="คุณอยากแชร์อะไรวันนี้ไหม? 🌸"></textarea>
+
+      <div class="media-upload">
+        <label for="fileInput">📷 เพิ่มรูป/วิดีโอ</label>
+        <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+        <span class="file-name" id="fileName"></span>
+      </div>
+
+      <div class="options">
+        <label>🔒 ความเป็นส่วนตัว:
+          <select id="privacy">
+            <option value="public">🌍 สาธารณะ</option>
+            <option value="friends">👭 เฉพาะเพื่อน</option>
+          </select>
+        </label>
+
+        <label>
+          💬 ปิดคอมเมนต์
+          <input type="checkbox" id="disableComments">
+        </label>
+      </div>
+
+      <button class="post-btn" onclick="createPost()">โพสต์ 💫</button>
+    </div>
+
+  </main>
+
+  <footer>
+    <button onclick="goTo('index.html')">🏠</button>
+    <button onclick="goTo('chat.html')">💬</button>
+    <button onclick="goTo('profile.html')">🧑</button>
+    <button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+      authDomain: "realfantext.firebaseapp.com",
+      databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+      projectId: "realfantext",
+      storageBucket: "realfantext.firebasestorage.app",
+      messagingSenderId: "1095067084325",
+      appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+      measurementId: "G-TYRV3WJTJV"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    document.getElementById('fileInput').addEventListener('change', () => {
+      const file = document.getElementById('fileInput').files[0];
+      document.getElementById('fileName').innerText = file ? file.name : '';
+    });
+
+    async function createPost() {
+      const text = document.getElementById('postText').value.trim();
+      const privacy = document.getElementById('privacy').value;
+      const disableComments = document.getElementById('disableComments').checked;
+      const file = document.getElementById('fileInput').files[0];
+
+      if (!text && !file) { alert('กรุณาใส่ข้อความหรือเลือกรูป/วิดีโอก่อนโพสต์ค่ะ 💬'); return; }
+
+      let fileURL = "";
+      if (file) {
+        const fileRef = ref(storage, "posts/" + Date.now() + "_" + file.name);
+        await uploadBytes(fileRef, file);
+        fileURL = await getDownloadURL(fileRef);
+      }
+
+      await addDoc(collection(db, "posts"), {
+        author: "currentUserId", // TODO: แทนด้วย userId จริง
+        text,
+        fileURL,
+        privacy,
+        disableComments,
+        repostFrom: null,
+        createdAt: new Date()
+      });
+
+      alert("🌸 โพสต์สำเร็จ!");
+      document.getElementById('postText').value = '';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('fileName').innerText = '';
+      loadPosts();
+    }
+
+    async function loadPosts() {
+      const feed = document.getElementById('feed');
+      feed.querySelectorAll('.post').forEach(el => el.remove());
+
+      const q = query(collection(db, "posts"), orderBy("createdAt","desc"));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(doc=>{
+        const data = doc.data();
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        postDiv.innerHTML = `
+          <div class="author">${data.author}${data.repostFrom?' 🔁':''}</div>
+          <div class="content">${data.text || ''}${data.fileURL? `<br><a href="${data.fileURL}" target="_blank">📎 ดูไฟล์</a>`:''}</div>
+          <div class="actions">
+            <span onclick="repost('${data.author}','${data.text}')">🔁</span>
+          </div>
+        `;
+        feed.appendChild(postDiv);
+      });
+    }
+
+    async function repost(user,text) {
+      await addDoc(collection(db,"posts"),{
+        author:"currentUserId",
+        text,
+        fileURL:"",
+        privacy:"public",
+        disableComments:false,
+        repostFrom:user,
+        createdAt:new Date()
+      });
+      alert("🔁 รีโพสต์สำเร็จ!");
+      loadPosts();
+    }
+
+    function goTo(page){ window.location.href = page; }
+
+    window.createPost = createPost;
+    window.repost = repost;
+    window.goTo = goTo;
+
+    loadPosts();
+  </script>
+</body>
+</html>
