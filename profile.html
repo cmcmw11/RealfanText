@@ -22,6 +22,44 @@ main{width:100%;padding:16px 16px 80px 16px;flex:1;}
 .post .repost{font-size:0.85rem;color:#555;margin-top:4px;}
 footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:0 4px 10px rgba(0,0,0,0.05);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
 footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
+
+/* Modal แก้ไขโปรไฟล์ */
+#editProfileModal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  justify-content:center;
+  align-items:center;
+}
+#editProfileModal form{
+  background:white;
+  padding:16px;
+  border-radius:18px;
+  width:90%;
+  max-width:400px;
+}
+#editProfileModal img{
+  width:100px;height:100px;border-radius:50%;object-fit:cover;border:2px solid #6a5acd;margin-bottom:8px;
+}
+#editProfileModal input, #editProfileModal button{
+  width:100%;padding:8px;margin:6px 0;border-radius:12px;border:1px solid #ddd;font-family:'Mali';font-size:1rem;
+}
+#editProfileModal button[type="submit"]{
+  background:linear-gradient(135deg,#d6b8ff,#a5c9ff);
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+#editProfileModal button[type="button"]{
+  background:#ccc;
+  color:#333;
+  border:none;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -33,6 +71,7 @@ footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
     <img src="" id="profileAvatar" class="avatar-large">
     <div class="profile-info">
       <h2 id="profileName"></h2>
+      <p>ชื่ออวาตาร์: <span id="profileAvatarName">-</span></p>
       <p>เพื่อน: <span id="friendCount">0</span> คน</p>
     </div>
     <button class="edit-btn" onclick="editProfile()">แก้ไข</button>
@@ -40,6 +79,21 @@ footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
 
   <div id="userPosts"></div>
 </main>
+
+<!-- Modal แก้ไขโปรไฟล์ -->
+<div id="editProfileModal">
+  <form id="editProfileForm">
+    <h3>แก้ไขโปรไฟล์</h3>
+    <div style="text-align:center; margin-bottom:12px;">
+      <img id="editAvatarPreview" src="">
+      <input type="file" id="editAvatarUpload" accept="image/*">
+    </div>
+    <input type="text" id="editRealName" placeholder="ชื่อจริง" required>
+    <input type="text" id="editAvatarName" placeholder="ชื่ออวาตาร์">
+    <button type="submit">บันทึก</button>
+    <button type="button" onclick="closeEditModal()">ยกเลิก</button>
+  </form>
+</div>
 
 <footer>
   <button onclick="goTo('index.html')">🏠</button>
@@ -50,27 +104,27 @@ footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
+// Firebase Config ใหม่
 const firebaseConfig = {
-  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
-  authDomain: "realfantext.firebaseapp.com",
-  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
-  projectId: "realfantext",
-  storageBucket: "realfantext.firebasestorage.app",
-  messagingSenderId: "1095067084325",
-  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
-  measurementId: "G-TYRV3WJTJV"
+  apiKey: "AIzaSyBJ14OYFCG4FAtcLBp_jqWRbZhmaFIVlkg",
+  authDomain: "realfantext-89dc3.firebaseapp.com",
+  databaseURL: "https://realfantext-89dc3-default-rtdb.firebaseio.com",
+  projectId: "realfantext-89dc3",
+  storageBucket: "realfantext-89dc3.firebasestorage.app",
+  messagingSenderId: "356157848865",
+  appId: "1:356157848865:web:cc62438b1e20ef8e801260",
+  measurementId: "G-8K4NBE3B61"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // session
 const currentUserId = localStorage.getItem("currentUserId");
-const currentAvatar = localStorage.getItem("avatar");
-const currentName = localStorage.getItem("realName");
-
 if(!currentUserId){
   alert("❌ กรุณาเข้าสู่ระบบก่อน");
   window.location.href = "login.html";
@@ -78,6 +132,7 @@ if(!currentUserId){
 
 const profileAvatar = document.getElementById('profileAvatar');
 const profileName = document.getElementById('profileName');
+const profileAvatarName = document.getElementById('profileAvatarName');
 const friendCount = document.getElementById('friendCount');
 const userPosts = document.getElementById('userPosts');
 
@@ -86,7 +141,8 @@ async function loadProfile(){
   const userDoc = await getDoc(doc(db,"users",currentUserId));
   const data = userDoc.data();
   profileAvatar.src = data.avatar || 'https://via.placeholder.com/60';
-  profileName.textContent = data.realName || currentName;
+  profileName.textContent = data.realName || '-';
+  profileAvatarName.textContent = data.avatarName || '-';
   friendCount.textContent = data.friends?.length || 0;
 }
 
@@ -96,11 +152,9 @@ async function loadPosts(){
   const q = query(postsRef, orderBy("createdAt","desc"));
   const snapshot = await getDocs(q);
   userPosts.innerHTML='';
-
   snapshot.forEach(doc=>{
     const data = doc.data();
-    if(data.userId !== currentUserId) return; // เฉพาะโพสต์ของตัวเอง
-
+    if(data.userId !== currentUserId) return;
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
     postDiv.innerHTML = `
@@ -112,16 +166,58 @@ async function loadPosts(){
   });
 }
 
-// แก้ไขโปรไฟล์
+// Modal แก้ไขโปรไฟล์
+const editModal = document.getElementById('editProfileModal');
+const editAvatarPreview = document.getElementById('editAvatarPreview');
+let newProfileFile = null;
+
 function editProfile(){
-  const newName = prompt("ชื่อใหม่:", profileName.textContent);
-  if(newName){
-    // อัพเดต Firestore (mock)
-    profileName.textContent = newName;
-    // TODO: update firestore users doc
-    alert("อัพเดตชื่อเรียบร้อย 💜");
-  }
+  editModal.style.display='flex';
+  editAvatarPreview.src = profileAvatar.src;
+  document.getElementById('editRealName').value = profileName.textContent;
+  document.getElementById('editAvatarName').value = profileAvatarName.textContent==='-'?'':profileAvatarName.textContent;
 }
+
+function closeEditModal(){ editModal.style.display='none'; }
+
+document.getElementById('editAvatarUpload').addEventListener('change',(e)=>{
+  newProfileFile = e.target.files[0];
+  if(newProfileFile){
+    const reader = new FileReader();
+    reader.onload = ()=> editAvatarPreview.src = reader.result;
+    reader.readAsDataURL(newProfileFile);
+  }
+});
+
+// submit form แก้ไขโปรไฟล์
+document.getElementById('editProfileForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const newName = document.getElementById('editRealName').value.trim();
+  const newAvatarName = document.getElementById('editAvatarName').value.trim();
+  let newAvatarURL = profileAvatar.src;
+
+  try{
+    if(newProfileFile){
+      const avatarRef = ref(storage, `profiles/${currentUserId}_${newProfileFile.name}`);
+      await uploadBytes(avatarRef, newProfileFile);
+      newAvatarURL = await getDownloadURL(avatarRef);
+    }
+
+    await updateDoc(doc(db,"users",currentUserId),{
+      realName: newName,
+      avatar: newAvatarURL,
+      avatarName: newAvatarName
+    });
+
+    profileAvatar.src = newAvatarURL;
+    profileName.textContent = newName;
+    profileAvatarName.textContent = newAvatarName || '-';
+    alert("อัปเดตโปรไฟล์เรียบร้อย 💜");
+    closeEditModal();
+  }catch(err){
+    alert("❌ "+err.message);
+  }
+});
 
 function goTo(page){ window.location.href=page; }
 
