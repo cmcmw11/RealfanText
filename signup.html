@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครสมาชิก 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#a5c9ff;--purple:#d6b8ff;--white:#ffffff;--bg:#f5f7ff;--text:#333;--shadow:0 4px 10px rgba(0,0,0,0.05);--radius:18px;}
+body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;max-width:430px;margin:0 auto;}
+header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
+form{background:var(--white);padding:16px;margin:16px;width:90%;border-radius:var(--radius);box-shadow:var(--shadow);}
+form h3{margin-top:0;}
+input, select, button, textarea{width:100%;padding:8px;margin:6px 0;border-radius:12px;border:1px solid #ddd;font-family:'Mali';font-size:1rem;}
+button{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;border:none;cursor:pointer;}
+.avatar-options{display:flex;justify-content:space-around;margin:8px 0;}
+.avatar-options img{width:60px;height:60px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.avatar-options img.selected{border-color:var(--purple);}
+</style>
+</head>
+<body>
+
+<header>สมัครสมาชิก 💜</header>
+
+<form id="signupForm">
+  <h3>โปรไฟล์จริง</h3>
+  <input type="text" id="realName" placeholder="ชื่อจริง" required>
+  <input type="date" id="birthday" placeholder="วันเกิด" required>
+  <input type="email" id="email" placeholder="อีเมล" required>
+  <input type="password" id="password" placeholder="รหัสผ่าน" required>
+
+  <h3>โปรไฟล์อวาตาร์</h3>
+  <p>เลือกอวาตาร์ของคุณ</p>
+  <div class="avatar-options" id="avatars">
+    <img src="assets/avatars/avatar1.png" alt="avatar1">
+    <img src="assets/avatars/avatar2.png" alt="avatar2">
+    <img src="assets/avatars/avatar3.png" alt="avatar3">
+    <img src="assets/avatars/avatar4.png" alt="avatar4">
+    <img src="assets/avatars/avatar5.png" alt="avatar5">
+    <img src="assets/avatars/avatar6.png" alt="avatar6">
+  </div>
+
+  <h3>คำถามส่วนตัวสำหรับเพิ่มเพื่อน</h3>
+  <input type="text" id="friendQuestion" placeholder="เช่น รหัสลับสำหรับเพิ่มเพื่อน">
+
+  <button type="submit">สมัครสมาชิก 💫</button>
+</form>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+  authDomain: "realfantext.firebaseapp.com",
+  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+  projectId: "realfantext",
+  storageBucket: "realfantext.firebasestorage.app",
+  messagingSenderId: "1095067084325",
+  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+  measurementId: "G-TYRV3WJTJV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let selectedAvatar = "";
+
+document.querySelectorAll('#avatars img').forEach(img=>{
+  img.addEventListener('click',()=>{
+    document.querySelectorAll('#avatars img').forEach(i=>i.classList.remove('selected'));
+    img.classList.add('selected');
+    selectedAvatar = img.src;
+  });
+});
+
+document.getElementById('signupForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const realName = document.getElementById('realName').value.trim();
+  const birthday = document.getElementById('birthday').value;
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const friendQuestion = document.getElementById('friendQuestion').value.trim();
+
+  if(!selectedAvatar){ alert("กรุณาเลือกอวาตาร์ 💫"); return; }
+
+  try{
+    const userCredential = await createUserWithEmailAndPassword(auth,email,password);
+    const userId = userCredential.user.uid;
+
+    await setDoc(doc(db,"users",userId),{
+      realName,
+      birthday,
+      email,
+      avatar:selectedAvatar,
+      friendQuestion,
+      createdAt: new Date()
+    });
+
+    alert("🌸 สมัครสมาชิกสำเร็จ!");
+    window.location.href="login.html";
+  }catch(err){
+    alert("❌ "+err.message);
+  }
+});
+</script>
+
+</body>
+</html>
