@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แชท 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#a5c9ff;--purple:#d6b8ff;--white:#ffffff;--bg:#f5f7ff;--text:#333;--shadow:0 4px 10px rgba(0,0,0,0.05);--radius:18px;}
+body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;max-width:430px;margin:0 auto;height:100vh;}
+header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
+#chatArea{flex:1;width:100%;padding:16px;overflow-y:auto;display:flex;flex-direction:column;}
+.message{background:var(--white);padding:8px 12px;margin:4px 0;border-radius:16px;max-width:70%;box-shadow:var(--shadow);}
+.sent{align-self:flex-end;background:linear-gradient(135deg,var(--blue),var(--purple));color:white;}
+.received{align-self:flex-start;}
+.message .author{font-weight:600;font-size:0.85rem;margin-bottom:2px;}
+#inputArea{display:flex;width:100%;padding:8px;background:var(--white);box-shadow:0 -2px 5px rgba(0,0,0,0.1);}
+#inputArea input[type=text]{flex:1;padding:8px;border-radius:16px;border:1px solid #ddd;margin-right:4px;}
+#inputArea input[type=file]{display:none;}
+#inputArea button{padding:8px 12px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--purple),var(--blue));color:white;cursor:pointer;margin-left:2px;}
+footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:50px 0 10px 0;box-shadow:0 4px 10px rgba(0,0,0,0.05);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
+footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>แชท 💜</header>
+
+<div id="chatArea"></div>
+
+<div id="inputArea">
+  <input type="text" id="messageInput" placeholder="พิมพ์ข้อความ...">
+  <button id="sendBtn">ส่ง</button>
+  <button id="imageBtn">📷</button>
+  <input type="file" id="imageInput" accept="image/*" multiple>
+</div>
+
+<footer>
+<button onclick="goTo('index.html')">🏠</button>
+<button onclick="goTo('chat.html')">💬</button>
+<button onclick="goTo('profile.html')">🧑</button>
+<button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+  authDomain: "realfantext.firebaseapp.com",
+  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+  projectId: "realfantext",
+  storageBucket: "realfantext.firebasestorage.app",
+  messagingSenderId: "1095067084325",
+  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+  measurementId: "G-TYRV3WJTJV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+const currentUserId = localStorage.getItem("currentUserId");
+const currentAvatar = localStorage.getItem("avatar");
+const currentName = localStorage.getItem("realName");
+
+if(!currentUserId){
+  alert("❌ กรุณาเข้าสู่ระบบก่อน");
+  window.location.href = "login.html";
+}
+
+const chatArea = document.getElementById('chatArea');
+const input = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const imageBtn = document.getElementById('imageBtn');
+const imageInput = document.getElementById('imageInput');
+
+let dailyImagesCount = 0;
+
+// ฟังก์ชันส่งข้อความ
+async function sendMessage(text, imageUrl=null){
+  await addDoc(collection(db,"chat"),{
+    fromUserId: currentUserId,
+    avatar: currentAvatar,
+    text,
+    imageUrl,
+    timestamp: new Date()
+  });
+}
+
+// ปุ่มส่งข้อความ
+sendBtn.addEventListener('click', ()=>{
+  const text = input.value.trim();
+  if(!text) return;
+  sendMessage(text);
+  input.value='';
+});
+
+// ปุ่มเพิ่มรูป
+imageBtn.addEventListener('click', ()=>imageInput.click());
+
+imageInput.addEventListener('change', async ()=>{
+  if(imageInput.files.length + dailyImagesCount >5){
+    alert("❌ จำกัดส่งรูปไม่เกิน 5 ภาพต่อวัน");
+    return;
+  }
+  for(const file of imageInput.files){
+    const storageRef = ref(storage, `chatImages/${currentUserId}/${Date.now()}_${file.name}`);
+    await uploadBytes(storageRef,file);
+    const url = await getDownloadURL(storageRef);
+    await sendMessage('',url);
+    dailyImagesCount++;
+  }
+  imageInput.value='';
+});
+
+// โหลดข้อความเรียลไทม์
+const q = query(collection(db,"chat"), orderBy("timestamp","asc"));
+onSnapshot(q,(snapshot)=>{
+  chatArea.innerHTML='';
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message ' + (data.fromUserId===currentUserId?'sent':'received');
+    msgDiv.innerHTML = `
+      ${data.fromUserId===currentUserId?'':`<div class="author">${data.fromUserId} 🧑</div>`}
+      <div>${data.text || ''}</div>
+      ${data.imageUrl?`<img src="${data.imageUrl}" style="max-width:150px;border-radius:12px;margin-top:4px;">`:''}
+    `;
+    chatArea.appendChild(msgDiv);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  });
+});
+
+function goTo(page){ window.location.href=page; }
+</script>
+
+</body>
+</html>
