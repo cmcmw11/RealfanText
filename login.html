@@ -33,6 +33,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebas
 import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJ14OYFCG4FAtcLBp_jqWRbZhmaFIVlkg",
   authDomain: "realfantext-89dc3.firebaseapp.com",
@@ -47,6 +48,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Login
 document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
@@ -56,6 +58,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     const userCredential = await signInWithEmailAndPassword(auth,email,password);
     const userId = userCredential.user.uid;
 
+    // ดึงข้อมูลผู้ใช้จาก Firestore
     const userDoc = await getDoc(doc(db,"users",userId));
     if(!userDoc.exists()){ 
       alert("❌ ไม่พบข้อมูลผู้ใช้"); 
@@ -64,18 +67,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
 
     const data = userDoc.data();
 
-    // เก็บ session
+    // เก็บข้อมูล session
     localStorage.setItem("currentUserId", userId);
     localStorage.setItem("realName", data.realName);
     localStorage.setItem("avatar", data.avatar);
-    localStorage.setItem("avatarName", data.avatarName || "");
-    localStorage.setItem("profile", data.profile || "");
-    localStorage.setItem("friendQuestion", data.friendQuestion || "");
+    localStorage.setItem("avatarName", data.avatarName);
+    localStorage.setItem("profile", data.profile);
+    localStorage.setItem("friendQuestion", data.friendQuestion);
 
-    console.log(`🌸 ยินดีต้อนรับ ${data.realName}!`);
-
-    // redirect ไปหน้า index.html
-    setTimeout(()=>{ window.location.href="./index.html"; }, 100);
+    alert(`🌸 ยินดีต้อนรับ ${data.realName}!`);
+    window.location.href = "index.html";
 
   }catch(err){
     alert("❌ "+err.message);
