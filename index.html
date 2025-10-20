@@ -14,6 +14,7 @@ main{width:100%;padding:0 16px 80px 16px;flex:1;}
 .author{font-weight:600;color:#6a5acd;}
 .content{margin-top:8px;font-size:1rem;}
 .actions{margin-top:10px;display:flex;justify-content:flex-end;font-size:1.2rem;cursor:pointer;}
+.avatar{width:30px;height:30px;border-radius:50%;margin-right:6px;}
 footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:0 4px 10px rgba(0,0,0,0.05);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
 footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
 </style>
@@ -33,7 +34,7 @@ footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
@@ -49,7 +50,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// อ่าน session จาก localStorage
+// อ่าน session
 const currentUserId = localStorage.getItem("currentUserId");
 const currentAvatar = localStorage.getItem("avatar");
 const currentName = localStorage.getItem("realName");
@@ -64,21 +65,27 @@ async function loadFeed(){
   const feed = document.getElementById('feed');
   feed.innerHTML='';
 
-  // แสดงโพสต์สาธารณะและเฉพาะเพื่อน
   const postsRef = collection(db,"posts");
   const q = query(postsRef, orderBy("createdAt","desc"));
   const snapshot = await getDocs(q);
 
   snapshot.forEach(doc=>{
     const data = doc.data();
-    // filter: ถ้าเฉพาะเพื่อน ต้องเช็คว่าเป็นเพื่อนกัน (simplified)
+
+    // กรองโพสต์เฉพาะเพื่อน
+    if(data.privacy==='friends' && !data.friends?.includes(currentUserId)) return;
+
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
     postDiv.innerHTML = `
-      <div class="author">${data.author}${data.repostFrom?' 🔁 จาก '+data.repostFrom:''}</div>
+      <div class="author">
+        <img src="${data.avatar || 'https://via.placeholder.com/30'}" class="avatar">
+        ${data.author}
+        ${data.repostFrom?` 🔁 จาก ${data.repostFrom}`:''}
+      </div>
       <div class="content">${data.text || ''}${data.fileURL? `<br><a href="${data.fileURL}" target="_blank">📎 ดูไฟล์</a>` : ''}</div>
       <div class="actions">
-        <span>❤️ ไลค์</span> | <span>💬 คอมเมนต์</span> | <span>🔁 รีโพสต์</span>
+        <span>❤️</span> | <span>💬</span> | <span>🔁</span>
       </div>
     `;
     feed.appendChild(postDiv);
