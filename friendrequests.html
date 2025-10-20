@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำขอเพื่อน 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Mali',sans-serif;margin:0;background:#f5f7ff;color:#333;display:flex;flex-direction:column;align-items:center;max-width:430px;margin:0 auto;}
+header{background:linear-gradient(90deg,#a5c9ff,#d6b8ff);color:white;width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;border-bottom-left-radius:18px;border-bottom-right-radius:18px;}
+main{width:100%;padding:16px 16px 80px 16px;flex:1;}
+.request-card{display:flex;align-items:center;background:white;padding:8px 12px;margin-bottom:12px;border-radius:18px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+.request-card img{width:50px;height:50px;border-radius:50%;margin-right:12px;}
+.request-info{flex:1;}
+.request-info h3{margin:0;font-size:1rem;}
+.request-info p{margin:2px 0;font-size:0.85rem;color:#555;}
+.accept-btn, .reject-btn{padding:6px 12px;border:none;border-radius:16px;color:white;cursor:pointer;margin-left:4px;}
+.accept-btn{background:linear-gradient(135deg,#a5c9ff,#d6b8ff);}
+.reject-btn{background:#ccc;}
+footer{background:white;position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:0 4px 10px rgba(0,0,0,0.05);border-top-left-radius:18px;border-top-right-radius:18px;}
+footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>คำขอเพื่อน 💜</header>
+
+<main id="requests"></main>
+
+<footer>
+<button onclick="goTo('index.html')">🏠</button>
+<button onclick="goTo('chat.html')">💬</button>
+<button onclick="goTo('profile.html')">🧑</button>
+<button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, updateDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+  authDomain: "realfantext.firebaseapp.com",
+  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+  projectId: "realfantext",
+  storageBucket: "realfantext.firebasestorage.app",
+  messagingSenderId: "1095067084325",
+  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+  measurementId: "G-TYRV3WJTJV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const currentUserId = localStorage.getItem("currentUserId");
+if(!currentUserId){ alert("❌ กรุณาเข้าสู่ระบบก่อน"); window.location.href="login.html"; }
+
+const requestsContainer = document.getElementById('requests');
+
+// โหลดคำขอเพื่อน
+async function loadRequests(){
+  requestsContainer.innerHTML='';
+  const userDoc = await getDoc(doc(db,"users",currentUserId));
+  const data = userDoc.data();
+  const friendRequests = data.friendRequests || [];
+
+  for(const req of friendRequests){
+    const fromUser = await getDoc(doc(db,"users",req.from));
+    const userData = fromUser.data();
+    const card = document.createElement('div');
+    card.className='request-card';
+    card.innerHTML=`
+      <img src="${userData.avatar || 'https://via.placeholder.com/50'}">
+      <div class="request-info">
+        <h3>${userData.realName}</h3>
+        <p>ตอบคำถาม: ${req.answer}</p>
+      </div>
+      <button class="accept-btn">✔️ ยืนยัน</button>
+      <button class="reject-btn">❌ ปฏิเสธ</button>
+    `;
+    // ยืนยันเพื่อน
+    card.querySelector('.accept-btn').addEventListener('click', async ()=>{
+      // เพิ่มเพื่อนทั้งสองฝ่าย
+      await updateDoc(doc(db,"users",currentUserId),{friends: arrayUnion(req.from), friendRequests: arrayRemove(req)});
+      await updateDoc(doc(db,"users",req.from),{friends: arrayUnion(currentUserId)});
+      card.remove();
+      alert("เพิ่มเพื่อนเรียบร้อย 💜");
+    });
+    // ปฏิเสธ
+    card.querySelector('.reject-btn').addEventListener('click', async ()=>{
+      await updateDoc(doc(db,"users",currentUserId),{friendRequests: arrayRemove(req)});
+      card.remove();
+    });
+    requestsContainer.appendChild(card);
+  }
+}
+
+function goTo(page){ window.location.href=page; }
+
+loadRequests();
+</script>
+
+</body>
+</html>
