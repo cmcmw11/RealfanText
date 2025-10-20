@@ -1,9 +1,126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครสมาชิก 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#a5c9ff;
+  --purple:#d6b8ff;
+  --white:#ffffff;
+  --bg:#f5f7ff;
+  --text:#333;
+  --shadow:0 4px 10px rgba(0,0,0,0.05);
+  --radius:18px;
+}
+body{
+  font-family:'Mali',sans-serif;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  max-width:430px;
+  margin:0 auto;
+}
+header{
+  background:linear-gradient(90deg,var(--blue),var(--purple));
+  color:var(--white);
+  width:100%;
+  text-align:center;
+  padding:12px 0;
+  font-size:1.4rem;
+  font-weight:600;
+  border-bottom-left-radius:var(--radius);
+  border-bottom-right-radius:var(--radius);
+}
+form{
+  background:var(--white);
+  padding:16px;
+  margin:16px;
+  width:90%;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+form h3{margin-top:0;}
+input, select, button, textarea{width:100%;padding:8px;margin:6px 0;border-radius:12px;border:1px solid #ddd;font-family:'Mali';font-size:1rem;}
+button{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;border:none;cursor:pointer;}
+
+/* Avatar Options */
+.avatar-options{display:flex;justify-content:space-around;margin:8px 0;}
+.avatar-options img{width:60px;height:60px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:0.2s;}
+.avatar-options img:hover{transform:scale(1.1);}
+.avatar-options img.selected{border-color:var(--purple);}
+
+/* Profile Upload */
+.profile-upload{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:12px;
+}
+.profile-upload img{
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid var(--purple);
+  margin-bottom:8px;
+}
+.profile-upload input[type="file"]{
+  display:block;
+}
+</style>
+</head>
+<body>
+
+<header>สมัครสมาชิก 💜</header>
+
+<form id="signupForm">
+
+  <h3>โปรไฟล์จริง</h3>
+  
+  <!-- เพิ่มส่วนอัปโหลดรูปโปรไฟล์จริง -->
+  <div class="profile-upload">
+    <img id="profilePreview" src="https://via.placeholder.com/100?text=Profile" alt="โปรไฟล์">
+    <input type="file" id="profileUpload" accept="image/*">
+  </div>
+
+  <input type="text" id="realName" placeholder="ชื่อจริง" required>
+  <input type="date" id="birthday" placeholder="วันเกิด" required>
+  <input type="email" id="email" placeholder="อีเมล" required>
+  <input type="password" id="password" placeholder="รหัสผ่าน" required>
+
+  <h3>โปรไฟล์อวาตาร์</h3>
+  <p>เลือกอวาตาร์ของคุณ</p>
+  <div class="avatar-options" id="avatars">
+    <img src="avatars/avatar1.png" alt="avatar1">
+    <img src="avatars/avatar2.png" alt="avatar2">
+    <img src="avatars/avatar3.png" alt="avatar3">
+    <img src="avatars/avatar4.png" alt="avatar4">
+    <img src="avatars/avatar5.png" alt="avatar5">
+    <img src="avatars/avatar6.png" alt="avatar6">
+  </div>
+
+  <!-- ช่องกรอกชื่ออวาตาร์ -->
+  <input type="text" id="avatarName" placeholder="ชื่ออวาตาร์" required>
+
+  <h3>คำถามส่วนตัวสำหรับเพิ่มเพื่อน</h3>
+  <input type="text" id="friendQuestion" placeholder="เช่น รหัสลับสำหรับเพิ่มเพื่อน">
+
+  <button type="submit">สมัครสมาชิก 💫</button>
+</form>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBJ14OYFCG4FAtcLBp_jqWRbZhmaFIVlkg",
   authDomain: "realfantext-89dc3.firebaseapp.com",
@@ -41,6 +158,7 @@ document.querySelectorAll('#avatars img').forEach(img=>{
   });
 });
 
+// Submit form
 document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
 
@@ -55,10 +173,11 @@ document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   if(!profileFile){ alert("กรุณาอัปโหลดรูปโปรไฟล์ 💫"); return; }
 
   try{
+    // สร้าง user
     const userCredential = await createUserWithEmailAndPassword(auth,email,password);
     const userId = userCredential.user.uid;
 
-    // อัปโหลดรูปโปรไฟล์จริงไป Firebase Storage
+    // อัปโหลดรูปโปรไฟล์ไป Storage
     const profileRef = ref(storage, `profiles/${userId}_${profileFile.name}`);
     await uploadBytes(profileRef, profileFile);
     const profileURL = await getDownloadURL(profileRef);
@@ -69,7 +188,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e)=>{
       birthday,
       email,
       avatar:selectedAvatar,
-      avatarName, // เพิ่มชื่ออวาตาร์
+      avatarName,
       profile: profileURL,
       friendQuestion,
       createdAt: new Date()
@@ -82,3 +201,6 @@ document.getElementById('signupForm').addEventListener('submit', async (e)=>{
   }
 });
 </script>
+
+</body>
+</html>
