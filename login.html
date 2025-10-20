@@ -34,10 +34,10 @@ import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "htt
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyBJ14OYFCG4FAtcLBp_jqWRbZhmaFIVlkg",
+  apiKey: "AIzaSyBJ14OYFCG4FAtcLBp_jqWRbZhmaFIVlkg",
   authDomain: "realfantext-89dc3.firebaseapp.com",
   projectId: "realfantext-89dc3",
-  storageBucket: "realfantext-89dc3.firebasestorage.app",
+  storageBucket: "realfantext-89dc3.appspot.com",
   messagingSenderId: "356157848865",
   appId: "1:356157848865:web:cc62438b1e20ef8e801260",
   measurementId: "G-8K4NBE3B61"
@@ -64,26 +64,25 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
 
     const data = userDoc.data();
 
-    // เก็บ session สำหรับ real + avatar
+    // เก็บ session
     localStorage.setItem("currentUserId", userId);
     localStorage.setItem("realName", data.realName);
     localStorage.setItem("avatar", data.avatar);
-    localStorage.setItem("friendQuestion", data.friendQuestion);
+    localStorage.setItem("avatarName", data.avatarName || "");
+    localStorage.setItem("profile", data.profile || "");
+    localStorage.setItem("friendQuestion", data.friendQuestion || "");
 
-    // ใช้ console.log แทน alert เพื่อหลีกเลี่ยงปัญหา redirect
     console.log(`🌸 ยินดีต้อนรับ ${data.realName}!`);
 
-    // redirect ไป index.html แน่นอน
-    setTimeout(()=>{
-      window.location.href="./index.html"; 
-    }, 100); // 100ms delay ให้แน่ใจว่า session ถูกเก็บ
+    // redirect ไปหน้า index.html
+    setTimeout(()=>{ window.location.href="./index.html"; }, 100);
 
   }catch(err){
     alert("❌ "+err.message);
   }
 });
 
-// ฟีเจอร์ลืมรหัสผ่าน
+// ลืมรหัสผ่าน
 document.getElementById('forgotLink').addEventListener('click', async ()=>{
   const email = prompt("กรุณากรอกอีเมลของคุณ:");
   if(email){
