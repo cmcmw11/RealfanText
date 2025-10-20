@@ -7,38 +7,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root{--blue:#a5c9ff;--purple:#d6b8ff;--white:#ffffff;--bg:#f5f7ff;--text:#333;--shadow:0 4px 10px rgba(0,0,0,0.05);--radius:18px;}
-body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
-header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
-.search-box{margin:16px;width:90%;display:flex;gap:8px;}
-.search-box input{flex:1;padding:8px;border-radius:var(--radius);border:1px solid #ddd;}
-.search-box button{padding:8px 12px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--blue));color:var(--white);cursor:pointer;}
-main{width:100%;padding:0 16px 80px 16px;flex:1;}
-.user{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
-footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:var(--shadow);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
+body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;max-width:430px;margin:0 auto;}
+header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
+main{width:100%;padding:16px 16px 80px 16px;flex:1;}
+.search-box{display:flex;margin-bottom:16px;}
+.search-box input{flex:1;padding:8px;border-radius:16px;border:1px solid #ddd;margin-right:4px;}
+.search-box button{padding:8px 12px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--purple),var(--blue));color:white;cursor:pointer;}
+.user-card{display:flex;align-items:center;background:var(--white);padding:8px 12px;margin-bottom:12px;border-radius:var(--radius);box-shadow:var(--shadow);}
+.user-card img{width:50px;height:50px;border-radius:50%;margin-right:12px;}
+.user-info{flex:1;}
+.user-info h3{margin:0;font-size:1rem;}
+.user-info p{margin:2px 0;font-size:0.85rem;color:#555;}
+.add-btn{padding:6px 12px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--purple));color:white;cursor:pointer;}
+footer{background:var(--white);position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;padding:10px 0;box-shadow:0 4px 10px rgba(0,0,0,0.05);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);}
 footer button{background:none;border:none;font-size:1.5rem;cursor:pointer;}
-button.add-friend{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;border:none;padding:6px 10px;border-radius:12px;cursor:pointer;}
 </style>
 </head>
 <body>
+
 <header>ค้นหาเพื่อน 💜</header>
 
-<div class="search-box">
-<input type="text" id="searchInput" placeholder="พิมพ์ชื่อเพื่อน...">
-<button onclick="searchFriends()">🔍</button>
-</div>
-
-<main id="results"></main>
+<main>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="ค้นหาชื่อเพื่อน...">
+    <button id="searchBtn">🔍</button>
+  </div>
+  <div id="results"></div>
+</main>
 
 <footer>
-<button onclick="goTo('index.html')">🏠</button>
-<button onclick="goTo('chat.html')">💬</button>
-<button onclick="goTo('profile.html')">🧑</button>
-<button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
+  <button onclick="goTo('index.html')">🏠</button>
+  <button onclick="goTo('chat.html')">💬</button>
+  <button onclick="goTo('profile.html')">🧑</button>
+  <button onclick="goTo('friendsearch.html')">🧑‍🤝‍🧑</button>
 </footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
@@ -50,42 +56,66 @@ const firebaseConfig = {
   appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
   measurementId: "G-TYRV3WJTJV"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-async function searchFriends(){
-  const qText = document.getElementById('searchInput').value.toLowerCase();
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML='';
+// session
+const currentUserId = localStorage.getItem("currentUserId");
+const currentAvatar = localStorage.getItem("avatar");
+const currentName = localStorage.getItem("realName");
 
-  const q = query(collection(db,"users"),orderBy("username")); // สมมติ collection users
-  const snapshot = await getDocs(q);
-  snapshot.forEach(doc=>{
-    const data = doc.data();
-    if(data.username.toLowerCase().includes(qText)){
-      const userDiv = document.createElement('div');
-      userDiv.className='user';
-      userDiv.innerHTML=`<span>${data.username}</span>
-        <button class="add-friend" onclick="addFriend('${doc.id}','${data.username}')">➕ เพิ่มเพื่อน</button>`;
-      resultsDiv.appendChild(userDiv);
-    }
-  });
+if(!currentUserId){
+  alert("❌ กรุณาเข้าสู่ระบบก่อน");
+  window.location.href = "login.html";
 }
 
-async function addFriend(userId, username){
-  const currentUser = "currentUserId"; // TODO: แทนด้วยผู้ใช้จริง
-  await setDoc(doc(db,"friends",currentUser+"_"+userId),{
-    from: currentUser,
-    to: userId,
-    createdAt:new Date()
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const results = document.getElementById('results');
+
+// ค้นหาเพื่อน
+searchBtn.addEventListener('click', async ()=>{
+  const qText = searchInput.value.trim().toLowerCase();
+  results.innerHTML='';
+  if(!qText) return;
+
+  const usersRef = collection(db,"users");
+  const snapshot = await getDocs(usersRef);
+
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    if(doc.id===currentUserId) return; // ไม่แสดงตัวเอง
+    if(data.realName.toLowerCase().includes(qText)){
+      const card = document.createElement('div');
+      card.className = 'user-card';
+      card.innerHTML = `
+        <img src="${data.avatar || 'https://via.placeholder.com/50'}">
+        <div class="user-info">
+          <h3>${data.realName}</h3>
+          <p>คำถาม: ${data.friendQuestion || 'ไม่มี'}</p>
+        </div>
+        <button class="add-btn">เพิ่มเพื่อน</button>
+      `;
+      const btn = card.querySelector('.add-btn');
+      btn.addEventListener('click', ()=>sendFriendRequest(doc.id, data.friendQuestion));
+      results.appendChild(card);
+    }
   });
-  alert(`✅ เพิ่มเพื่อน ${username} สำเร็จ!`);
+});
+
+// ส่งคำขอเป็นเพื่อน
+async function sendFriendRequest(targetId, question){
+  let answer = prompt(`ตอบคำถามเพื่อเพิ่มเพื่อน: ${question || 'ไม่มีคำถาม'}`);
+  if(answer===null) return;
+  // บันทึกไป Firestore (mock)
+  const targetRef = doc(db,"users",targetId);
+  await updateDoc(targetRef,{friendRequests: arrayUnion({from:currentUserId,answer})});
+  alert("ส่งคำขอเพื่อนเรียบร้อย 💜");
 }
 
 function goTo(page){ window.location.href=page; }
-window.goTo=goTo;
-window.searchFriends=searchFriends;
-window.addFriend=addFriend;
 </script>
+
 </body>
 </html>
