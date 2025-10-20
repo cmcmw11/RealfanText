@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#a5c9ff;--purple:#d6b8ff;--white:#ffffff;--bg:#f5f7ff;--text:#333;--shadow:0 4px 10px rgba(0,0,0,0.05);--radius:18px;}
+body{font-family:'Mali',sans-serif;margin:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;max-width:430px;margin:0 auto;}
+header{background:linear-gradient(90deg,var(--blue),var(--purple));color:var(--white);width:100%;text-align:center;padding:12px 0;font-size:1.4rem;font-weight:600;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);}
+form{background:var(--white);padding:16px;margin:16px;width:90%;border-radius:var(--radius);box-shadow:var(--shadow);}
+input, button{width:100%;padding:8px;margin:6px 0;border-radius:12px;border:1px solid #ddd;font-family:'Mali';font-size:1rem;}
+button{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;border:none;cursor:pointer;}
+a{color:var(--purple);text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+
+<header>เข้าสู่ระบบ 💜</header>
+
+<form id="loginForm">
+  <input type="email" id="email" placeholder="อีเมล" required>
+  <input type="password" id="password" placeholder="รหัสผ่าน" required>
+  <button type="submit">Login 💫</button>
+</form>
+
+<p><a href="#" id="forgotLink">ลืมรหัสผ่าน?</a></p>
+<p>ยังไม่มีบัญชี? <a href="signup.html">สมัครสมาชิก</a></p>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxapGSRNjYTlpOJwrxpei2BY5XwqIlg0s",
+  authDomain: "realfantext.firebaseapp.com",
+  databaseURL: "https://realfantext-default-rtdb.firebaseio.com",
+  projectId: "realfantext",
+  storageBucket: "realfantext.firebasestorage.app",
+  messagingSenderId: "1095067084325",
+  appId: "1:1095067084325:web:ca46c22741e60ee99a01cc",
+  measurementId: "G-TYRV3WJTJV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  try{
+    const userCredential = await signInWithEmailAndPassword(auth,email,password);
+    const userId = userCredential.user.uid;
+
+    const userDoc = await getDoc(doc(db,"users",userId));
+    if(!userDoc.exists()){ alert("❌ ไม่พบข้อมูลผู้ใช้"); return; }
+
+    const data = userDoc.data();
+
+    // เก็บ session สำหรับทั้งโปรไฟล์จริง + avatar
+    localStorage.setItem("currentUserId", userId);
+    localStorage.setItem("realName", data.realName);
+    localStorage.setItem("avatar", data.avatar);
+    localStorage.setItem("friendQuestion", data.friendQuestion);
+
+    alert(`🌸 ยินดีต้อนรับ ${data.realName}!`);
+    window.location.href="index.html";
+  }catch(err){
+    alert("❌ "+err.message);
+  }
+});
+
+// ฟีเจอร์ลืมรหัสผ่าน
+document.getElementById('forgotLink').addEventListener('click', async ()=>{
+  const email = prompt("กรุณากรอกอีเมลของคุณ:");
+  if(email){
+    try{
+      await sendPasswordResetEmail(auth, email);
+      alert("✅ ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อย ตรวจสอบ inbox ของคุณ");
+    }catch(err){
+      alert("❌ "+err.message);
+    }
+  }
+});
+</script>
+
+</body>
+</html>
