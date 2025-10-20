@@ -58,18 +58,27 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     const userId = userCredential.user.uid;
 
     const userDoc = await getDoc(doc(db,"users",userId));
-    if(!userDoc.exists()){ alert("❌ ไม่พบข้อมูลผู้ใช้"); return; }
+    if(!userDoc.exists()){ 
+      alert("❌ ไม่พบข้อมูลผู้ใช้"); 
+      return; 
+    }
 
     const data = userDoc.data();
 
-    // เก็บ session สำหรับทั้งโปรไฟล์จริง + avatar
+    // เก็บ session สำหรับ real + avatar
     localStorage.setItem("currentUserId", userId);
     localStorage.setItem("realName", data.realName);
     localStorage.setItem("avatar", data.avatar);
     localStorage.setItem("friendQuestion", data.friendQuestion);
 
-    alert(`🌸 ยินดีต้อนรับ ${data.realName}!`);
-    window.location.href="index.html";
+    // ใช้ console.log แทน alert เพื่อหลีกเลี่ยงปัญหา redirect
+    console.log(`🌸 ยินดีต้อนรับ ${data.realName}!`);
+
+    // redirect ไป index.html แน่นอน
+    setTimeout(()=>{
+      window.location.href="./index.html"; 
+    }, 100); // 100ms delay ให้แน่ใจว่า session ถูกเก็บ
+
   }catch(err){
     alert("❌ "+err.message);
   }
